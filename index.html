@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121212' stroke='%239d7c65' stroke-width='2'/%3E%3Cpath d='M9 11l6 5-6 5M16 21h7' stroke='%23f5f5f5' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="config.js" defer></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand">
+            <h1 id="brand-title">Personal Homepage</h1>
+            <span id="brand-subtitle">Made by Daniel Castleberry</span>
+        </div>
+        <div class="nav-links" id="nav-links"></div>
+        <div class="nav-right">
+            <button class="cmd-trigger" onclick="openModal('cmdModal')">Palette <kbd>Ctrl+K</kbd></button>
+            <div class="clock">
+                <div class="time" id="time">00:00:00</div>
+                <div class="date" id="date">Loading...</div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="hero-section">
+            <div class="hero-greeting">
+                <h2 id="greeting">Welcome Back</h2>
+                <p>Enter a target query, search vulnerability records, or use the menu dropdowns above.</p>
+            </div>
+            <div class="search-wrapper">
+                <div class="search-container">
+                    <span id="search-badge" class="search-badge">Pivot</span>
+                    <input type="text" id="search-input" class="search-input" placeholder="Query Google, enter URL/IP, or type !vt, !shodan, !grey, !cve..." autofocus autocomplete="off">
+                    <span class="search-shortcut-hint">/</span>
+                </div>
+                <div class="bang-bar" id="bang-bar"></div>
+            </div>
+        </div>
+    </main>
+
+    <div class="footer-status">System Operational • Secure Tunnel Active</div>
+
+    <!-- MODAL 1: IOC Pivot & Bulk Log Scraper -->
+    <div id="iocModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>IOC Pivot & Bulk Log Scraper</h3>
+                <button class="close-modal" onclick="closeModal('iocModal')">&times;</button>
+            </div>
+            <div class="tool-group">
+                <span class="tool-label">Single Target Pivot (Auto-Refangs on Search)</span>
+                <input type="text" id="ioc-input" class="tool-input-field" placeholder="e.g. 8.8.8.8, hxxps[://]example[.]com, CVE-2024-1234, or SHA-256">
+            </div>
+            <div class="tool-actions">
+                <button class="tool-btn" onclick="pivotSearch('vt')">VirusTotal</button>
+                <button class="tool-btn" onclick="pivotSearch('shodan')">Shodan</button>
+                <button class="tool-btn" onclick="pivotSearch('urlscan')">URLScan</button>
+                <button class="tool-btn" onclick="pivotSearch('abuseip')">AbuseIPDB</button>
+                <button class="tool-btn tool-btn-secondary" onclick="pivotSearch('grey')">GreyNoise</button>
+                <button class="tool-btn tool-btn-secondary" onclick="pivotSearch('crt')">crt.sh</button>
+                <button class="tool-btn tool-btn-secondary" onclick="pivotSearch('cve')">NIST CVE</button>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="tool-group">
+                <div class="tool-label-row">
+                    <span class="tool-label">Bulk Log / Email Header IOC Extractor</span>
+                    <div class="tool-actions">
+                        <button class="tool-btn" style="padding: 0.28rem 0.65rem; font-size: 0.7rem;" onclick="extractBulkIOCs()">Extract IOCs</button>
+                        <button class="tool-btn tool-btn-secondary" style="padding: 0.28rem 0.65rem; font-size: 0.7rem;" onclick="copyValue('ioc-bulk-area', this)">Copy</button>
+                    </div>
+                </div>
+                <textarea id="ioc-bulk-area" class="tool-textarea" rows="5" placeholder="Paste raw firewall logs, email headers, or threat reports here and click 'Extract IOCs' to pull deduplicated IPs, Domains, URLs, Hashes, and CVEs..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Codec, Defanger, JWT & Timestamp Converter -->
+    <div id="decoderModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Codec, Defanger, JWT & Timestamp Utility</h3>
+                <button class="close-modal" onclick="closeModal('decoderModal')">&times;</button>
+            </div>
+            <div class="tool-group">
+                <span class="tool-label">Input String or Timestamp (Epoch / ISO-8601 / 18-Digit Windows FileTime)</span>
+                <textarea id="decoder-input" class="tool-textarea" rows="3" placeholder="Paste Base64, Hex, URL, IOC, JWT, or timestamp (e.g. 1727496000 or 133719696000000000)..."></textarea>
+            </div>
+            <div class="tool-actions">
+                <button class="tool-btn" onclick="transformData('b64decode')">B64 Decode</button>
+                <button class="tool-btn" onclick="transformData('b64encode')">B64 Encode</button>
+                <button class="tool-btn tool-btn-secondary" onclick="transformData('hexdecode')">Hex Decode</button>
+                <button class="tool-btn tool-btn-secondary" onclick="transformData('hexencode')">Hex Encode</button>
+                <button class="tool-btn tool-btn-secondary" onclick="transformData('urldecode')">URL Decode</button>
+                <button class="tool-btn tool-btn-secondary" onclick="transformData('urlencode')">URL Encode</button>
+                <button class="tool-btn tool-btn-secondary" onclick="transformData('defang')">Defang</button>
+                <button class="tool-btn tool-btn-secondary" onclick="transformData('refang')">Refang</button>
+                <button class="tool-btn tool-btn-secondary" onclick="transformData('jwt')">Inspect JWT</button>
+                <button class="tool-btn tool-btn-secondary" onclick="transformData('timestamp')">Parse Time</button>
+                <button class="tool-btn tool-btn-secondary" onclick="clearDecoder()">Clear</button>
+            </div>
+            <div class="tool-group">
+                <div class="tool-label-row">
+                    <span class="tool-label">Output Result</span>
+                    <button class="tool-btn tool-btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.7rem;" onclick="copyValue('decoder-output', this)">Copy</button>
+                </div>
+                <textarea id="decoder-output" class="tool-textarea" rows="5" readonly placeholder="Result displays here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Drag-and-Drop File & Text Hasher -->
+    <div id="hashModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Local WebCrypto File & Text Hasher</h3>
+                <button class="close-modal" onclick="closeModal('hashModal')">&times;</button>
+            </div>
+            <div id="file-drop-zone" class="drop-zone" onclick="document.getElementById('hash-file-input').click()">
+                <span id="drop-zone-label">Drag & drop any suspicious binary/file here, or click to browse (100% local in-memory)</span>
+                <input type="file" id="hash-file-input" style="display:none" onchange="handleFileSelect(this.files)">
+            </div>
+            <div class="tool-group">
+                <span class="tool-label">Or Hash Raw Text String</span>
+                <input type="text" id="hash-input" class="tool-input-field" placeholder="Type or paste string to compute live digests..." oninput="generateTextHashes()">
+            </div>
+            <div class="tool-group">
+                <span class="tool-label">SHA-1 (160-bit)</span>
+                <div class="input-with-copy">
+                    <input type="text" id="hash-sha1" class="tool-input-field" readonly>
+                    <button class="tool-btn tool-btn-secondary" onclick="copyValue('hash-sha1', this)">Copy</button>
+                </div>
+            </div>
+            <div class="tool-group">
+                <span class="tool-label">SHA-256 (256-bit)</span>
+                <div class="input-with-copy">
+                    <input type="text" id="hash-sha256" class="tool-input-field" readonly>
+                    <button class="tool-btn tool-btn-secondary" onclick="copyValue('hash-sha256', this)">Copy</button>
+                    <button class="tool-btn" onclick="lookupHashVT()">VT Lookup</button>
+                </div>
+            </div>
+            <div class="tool-group">
+                <span class="tool-label">SHA-512 (512-bit)</span>
+                <div class="input-with-copy">
+                    <input type="text" id="hash-sha512" class="tool-input-field" readonly>
+                    <button class="tool-btn tool-btn-secondary" onclick="copyValue('hash-sha512', this)">Copy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: IPv4 Subnet Calculator & MAC Address Formatter -->
+    <div id="subnetModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>IPv4 Subnet Calculator & MAC Formatter</h3>
+                <button class="close-modal" onclick="closeModal('subnetModal')">&times;</button>
+            </div>
+            <div class="tool-group">
+                <span class="tool-label">IPv4 Address & CIDR Prefix</span>
+                <input type="text" id="subnet-input" class="tool-input-field" value="10.0.0.68/24" oninput="calculateSubnet()">
+            </div>
+            <div class="subnet-grid">
+                <div class="subnet-box"><span class="subnet-box-label">Network Address</span><span class="subnet-box-val" id="sub-net">-</span></div>
+                <div class="subnet-box"><span class="subnet-box-label">Broadcast Address</span><span class="subnet-box-val" id="sub-bcast">-</span></div>
+                <div class="subnet-box"><span class="subnet-box-label">Subnet Mask</span><span class="subnet-box-val" id="sub-mask">-</span></div>
+                <div class="subnet-box"><span class="subnet-box-label">Cisco Wildcard Mask</span><span class="subnet-box-val" id="sub-wildcard">-</span></div>
+                <div class="subnet-box full-width"><span class="subnet-box-label">Usable Host IP Range</span><span class="subnet-box-val" id="sub-range" style="color:var(--accent-color);">-</span></div>
+                <div class="subnet-box full-width"><span class="subnet-box-label">Usable Hosts</span><span class="subnet-box-val" id="sub-hosts">-</span></div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="tool-group">
+                <span class="tool-label">Multi-Vendor MAC Address Formatter</span>
+                <input type="text" id="mac-input" class="tool-input-field" placeholder="Paste MAC in any format (e.g. 001a2b3c4d5e, 00-1A-2B-3C-4D-5E, 001a.2b3c.4d5e)..." oninput="formatMacAddress()">
+                <div class="mac-grid">
+                    <div class="subnet-box"><span class="subnet-box-label">Cisco IOS</span><span class="subnet-box-val" id="mac-cisco">-</span></div>
+                    <div class="subnet-box"><span class="subnet-box-label">Linux / IETF</span><span class="subnet-box-val" id="mac-linux">-</span></div>
+                    <div class="subnet-box"><span class="subnet-box-label">Windows / IEEE</span><span class="subnet-box-val" id="mac-win">-</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: One-Liner Command Builder & CVSS v3.1 Calculator -->
+    <div id="opsModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>One-Liner Generator & CVSS v3.1 Calculator</h3>
+                <button class="close-modal" onclick="closeModal('opsModal')">&times;</button>
+            </div>
+            <div class="modal-tabs">
+                <button class="modal-tab active" id="ops-tab-btn-shells" onclick="switchOpsTab('shells')">Shells & Transfers</button>
+                <button class="modal-tab" id="ops-tab-btn-cvss" onclick="switchOpsTab('cvss')">CVSS v3.1 Vector Calculator</button>
+            </div>
+
+            <!-- Tab 1: Shells & File Transfers -->
+            <div id="ops-pane-shells" class="ops-pane">
+                <div class="subnet-grid">
+                    <div class="tool-group">
+                        <span class="tool-label">LHOST / Callback IP</span>
+                        <input type="text" id="oneliner-ip" class="tool-input-field" value="10.0.0.100" oninput="renderOneLiners()">
+                    </div>
+                    <div class="tool-group">
+                        <span class="tool-label">LPORT / Listener Port</span>
+                        <input type="text" id="oneliner-port" class="tool-input-field" value="4444" oninput="renderOneLiners()">
+                    </div>
+                </div>
+                <div class="port-list" id="oneliner-list" style="max-height: 280px;"></div>
+            </div>
+
+            <!-- Tab 2: CVSS v3.1 Calculator -->
+            <div id="ops-pane-cvss" class="ops-pane" style="display:none;">
+                <div class="tool-group">
+                    <span class="tool-label">CVSS v3.1 Vector String</span>
+                    <input type="text" id="cvss-input" class="tool-input-field" value="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H" oninput="calculateCVSS()">
+                </div>
+                <div class="subnet-box full-width" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span class="subnet-box-label">Base Score & Severity Rating</span>
+                        <div class="subnet-box-val" id="cvss-score" style="font-size: 1.25rem;">9.8 CRITICAL</div>
+                    </div>
+                    <span class="dropdown-tag" id="cvss-subscores">Impact: 5.9 | Exploitability: 3.9</span>
+                </div>
+                <div class="port-list" id="cvss-breakdown" style="max-height: 220px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: CSPRNG Password Generator -->
+    <div id="passwordModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header"><h3>CSPRNG Credential Generator</h3><button class="close-modal" onclick="closeModal('passwordModal')">&times;</button></div>
+            <div class="tool-group">
+                <div class="tool-label-row"><span class="tool-label">Generated Credential</span><span class="tool-label" id="pass-length-label">Length: 24</span></div>
+                <input type="text" id="generated-password" class="tool-input-field" readonly style="color:var(--success-color); font-weight:600; font-size:1rem;">
+            </div>
+            <input type="range" id="pass-length" class="range-slider" min="12" max="64" value="24" oninput="updatePasswordLength()">
+            <div class="tool-actions">
+                <button class="tool-btn" onclick="createPassword()">Regenerate</button>
+                <button class="tool-btn tool-btn-secondary" onclick="copyValue('generated-password', this)">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 7: AES-GCM Scratchpad -->
+    <div id="notepadModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header"><h3>SecOps Scratchpad (AES-256-GCM)</h3><button class="close-modal" onclick="closeModal('notepadModal')">&times;</button></div>
+            <div class="tool-group">
+                <div class="tool-label-row"><span class="tool-label">Workspace Notes</span><span class="tool-label" id="scratchpad-status" style="color:var(--accent-color);">Auto-saved locally</span></div>
+                <textarea id="notepad" class="tool-textarea" rows="6" placeholder="Jot down command snippets, IPs, or scopes..."></textarea>
+            </div>
+            <div class="tool-group">
+                <span class="tool-label">Passphrase (PBKDF2 + AES-GCM)</span>
+                <div class="input-with-copy">
+                    <input type="password" id="notepad-pass" class="tool-input-field" placeholder="Enter passphrase to lock or unlock...">
+                    <button class="tool-btn" onclick="encryptNotepad()">Lock</button>
+                    <button class="tool-btn tool-btn-secondary" onclick="decryptNotepad()">Unlock</button>
+                </div>
+            </div>
+            <div class="tool-actions">
+                <button class="tool-btn tool-btn-secondary" onclick="copyValue('notepad', this)">Copy</button>
+                <button class="tool-btn tool-btn-secondary" onclick="exportNotepad()">Download .txt</button>
+                <button class="tool-btn tool-btn-secondary" onclick="clearNotepad()">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 8: Tabbed Reference Cheat Sheets (Ports / Event IDs / Chmod) -->
+    <div id="portsModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Security & Network Reference Cheat Sheets</h3>
+                <button class="close-modal" onclick="closeModal('portsModal')">&times;</button>
+            </div>
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-ref="ports" onclick="switchRefTab('ports')">Network Ports</button>
+                <button class="modal-tab" data-ref="events" onclick="switchRefTab('events')">Windows Event IDs</button>
+                <button class="modal-tab" data-ref="chmod" onclick="switchRefTab('chmod')">Linux Chmod & Bits</button>
+            </div>
+            <input type="text" id="port-filter" class="tool-input-field" placeholder="Filter current tab by number, service, event, or keyword..." oninput="filterPorts()">
+            <div class="port-list" id="port-list"></div>
+        </div>
+    </div>
+
+    <!-- MODAL 9: Ctrl+K Command Palette -->
+    <div id="cmdModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-header"><h3>Command Palette</h3><button class="close-modal" onclick="closeModal('cmdModal')">&times;</button></div>
+            <input type="text" id="cmd-input" class="tool-input-field" placeholder="Type a command, tool, or destination (↑/↓ to navigate, Enter to launch)..." autocomplete="off">
+            <div class="cmd-list" id="cmd-list"></div>
+        </div>
+    </div>
+
+</body>
+</html>
